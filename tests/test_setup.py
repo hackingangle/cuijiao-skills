@@ -110,6 +110,9 @@ class InstallerTest(unittest.TestCase):
         for root in roots:
             self.assertTrue((root / "cuijiao-sync/SKILL.md").is_file())
             self.assertTrue((root / "cuijiao-platform/SKILL.md").is_file())
+        projected = (roots[0] / "cuijiao-agent-7/SKILL.md").read_text()
+        self.assertIn("<!-- cuijiao-managed:7 -->", projected)
+        self.assertEqual(projected.split("---", 2)[1].strip().splitlines()[0], "name: cuijiao-agent-7")
         self.assertTrue((self.home / ".claude/agents/cuijiao-agent-7.md").is_file())
         self.assertEqual(old_skill.read_text(), "old Heimdall skill")
         self.assertNotIn(API.token, result.stdout + result.stderr)

@@ -162,9 +162,8 @@ def agent_content(item: dict[str, object]) -> str:
         "---\n"
         f"name: cuijiao-agent-{agent_id}\n"
         f"description: {json.dumps(str(description), ensure_ascii=False)}\n"
-        f"cuijiao_agent_id: {agent_id}\n"
-        "cuijiao_managed: true\n"
         "---\n\n"
+        f"<!-- cuijiao-managed:{agent_id} -->\n\n"
         f"# {name}\n\n"
         "访问萃角儿项目和素材时遵守 cuijiao-platform。\n\n"
         f"{prompt}\n"
@@ -191,7 +190,7 @@ def sync_agents(agents: list[dict[str, object]], roots: list[Path], claude: Path
         if root == HOME / ".claude/skills":
             continue
         for path in root.glob("cuijiao-agent-*/SKILL.md"):
-            if "cuijiao_managed: true" not in path.read_text(encoding="utf-8"):
+            if "<!-- cuijiao-managed:" not in path.read_text(encoding="utf-8"):
                 continue
             if path.parent.name.removeprefix("cuijiao-agent-") not in ids:
                 path.unlink()
@@ -201,7 +200,7 @@ def sync_agents(agents: list[dict[str, object]], roots: list[Path], claude: Path
                     pass
     if claude:
         for path in claude.glob("cuijiao-agent-*.md"):
-            if "cuijiao_managed: true" in path.read_text(encoding="utf-8") and path.stem.removeprefix("cuijiao-agent-") not in ids:
+            if "<!-- cuijiao-managed:" in path.read_text(encoding="utf-8") and path.stem.removeprefix("cuijiao-agent-") not in ids:
                 path.unlink()
 
 
