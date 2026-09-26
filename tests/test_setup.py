@@ -20,11 +20,21 @@ ROOT = Path(__file__).resolve().parents[1]
 class API(BaseHTTPRequestHandler):
     agents: list[dict[str, object]] | None = None
     token = "test-token-without-prefix"
+    redirect_projects = False
+    redirected_requests = 0
 
     def do_GET(self) -> None:
         if self.headers.get("Authorization") != f"Bearer {self.token}":
             self.respond(401, {"error": "unauthorized"})
         elif self.path == "/api/projects":
+            if self.redirect_projects:
+                self.send_response(302)
+                self.send_header("Location", "/api/redirected")
+                self.end_headers()
+            else:
+                self.respond(200, [])
+        elif self.path == "/api/redirected":
+            API.redirected_requests += 1
             self.respond(200, [])
         elif self.path == "/api/agents" and self.agents is not None:
             self.respond(200, self.agents)
@@ -48,6 +58,8 @@ class InstallerTest(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.home = Path(self.temp.name)
         API.token = "test-token-without-prefix"
+        API.redirect_projects = False
+        API.redirected_requests = 0
         for name in (".cursor", ".claude", ".codex", ".openclaw", ".hermes"):
             (self.home / name).mkdir()
         API.agents = [{"id": 7, "name": "写稿", "description": "写脚本", "system_prompt": "只用所选素材。"}]
@@ -142,6 +154,28 @@ class InstallerTest(unittest.TestCase):
         self.assertEqual(check.returncode, 0, check.stderr)
         self.assertFalse(marker.exists())
         self.assertNotIn(API.token, result.stdout + result.stderr)
+
+    def test_api_redirect_does_not_forward_token(self) -> None:
+        API.redirect_projects = True
+        result = self.run_script("setup-cuijiao.py")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("HTTP 302", result.stderr)
+        self.assertEqual(API.redirected_requests, 0)
+        self.assertFalse((self.home / ".cursor/skills/cuijiao-sync/SKILL.md").exists())
+
+    def test_unmanaged_agent_file_is_preserved(self) -> None:
+        existing = self.home / ".cursor/skills/cuijiao-agent-7/SKILL.md"
+        existing.parent.mkdir(parents=True)
+        existing.write_text("my own skill")
+        original_env = self.env_file.read_bytes()
+
+        result = self.run_script("setup-cuijiao.py")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("已有非托管智能体文件", result.stderr)
+        self.assertEqual(existing.read_text(), "my own skill")
+        self.assertEqual(self.env_file.read_bytes(), original_env)
+        self.assertFalse((self.home / ".cursor/skills/cuijiao-sync/SKILL.md").exists())
 
 
 if __name__ == "__main__":

@@ -23,6 +23,11 @@ ENV = CONFIG / "env"
 PIPE_SKILLS = ("cuijiao-sync", "cuijiao-platform")
 
 
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        return None
+
+
 def fail(message: str) -> None:
     raise SystemExit(message)
 
@@ -62,7 +67,8 @@ def request(url: str, token: str | None = None) -> tuple[int, bytes]:
     if token:
         headers["Authorization"] = f"Bearer {token}"
     try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=15) as response:
+        opener = urllib.request.build_opener(NoRedirect)
+        with opener.open(urllib.request.Request(url, headers=headers), timeout=15) as response:
             return response.status, response.read()
     except urllib.error.HTTPError as error:
         return error.code, error.read()
@@ -170,6 +176,20 @@ def agent_content(item: dict[str, object]) -> str:
     )
 
 
+def check_agent_targets(agents: list[dict[str, object]], roots: list[Path], claude: Path | None) -> None:
+    for item in agents:
+        agent_id = item["id"]
+        slug = f"cuijiao-agent-{agent_id}"
+        targets = [root / slug / "SKILL.md" for root in roots if root != HOME / ".claude/skills"]
+        if claude:
+            targets.append(claude / f"{slug}.md")
+        for path in targets:
+            if path.is_symlink() or (path.exists() and (
+                not path.is_file() or f"<!-- cuijiao-managed:{agent_id} -->" not in path.read_text(encoding="utf-8")
+            )):
+                fail(f"已有非托管智能体文件：{path}；没有安装任何技能。")
+
+
 def sync_agents(agents: list[dict[str, object]], roots: list[Path], claude: Path | None) -> None:
     ids = {str(item["id"]) for item in agents}
     for item in agents:
@@ -217,6 +237,7 @@ def main() -> None:
     if not roots:
         fail("未检测到 Cursor、Claude Code、Codex、OpenClaw 或 Hermes；可设置 CUIJIAO_SKILLS_DIRS。")
     source, skills = source_skills()
+    check_agent_targets(agents, roots, claude)
 
     write_env(base, token)
     for root in roots:
