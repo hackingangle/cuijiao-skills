@@ -9,7 +9,7 @@ description: >
 
 平台智能体是人设真源。本机 `cuijiao-agent-{id}` 文件只是投影；要修改人设，请在平台修改后重新运行安装器。
 
-cc-b 整合代码已提供独立 API Token 和 `GET /api/agents`，目标服务仍需部署对应版本。先通过登录会话调用 `POST /api/tokens` 签发 `hd_` API Token；Token 管理接口不接受 API Token。安装器会用该 Token 预检 `GET /api/projects` 和 `GET /api/agents`；若接口缺失或鉴权失败，它会报错并停止，不写入 `~/.cuijiao/env`，也不安装技能。
+cc-b 整合代码已提供独立 API Token 和 Agent 接口，目标服务仍需部署对应版本。先通过登录会话调用 `POST /api/tokens` 签发 `hd_` API Token；Token 管理接口不接受 API Token。安装器会用该 Token 预检 `GET /api/projects` 和 `GET /api/agents`；空账号会调用 `POST /api/agents/ensure-defaults` 补种默认智能体。接口缺失或鉴权失败时，安装器停止，不写入 `~/.cuijiao/env`，也不安装技能。
 
 ## 安装与更新
 

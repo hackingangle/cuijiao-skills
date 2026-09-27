@@ -22,6 +22,7 @@ class API(BaseHTTPRequestHandler):
     token = "test-token-without-prefix"
     redirect_projects = False
     redirected_requests = 0
+    seed_calls = 0
 
     def do_GET(self) -> None:
         if self.headers.get("Authorization") != f"Bearer {self.token}":
@@ -38,6 +39,16 @@ class API(BaseHTTPRequestHandler):
             self.respond(200, [])
         elif self.path == "/api/agents" and self.agents is not None:
             self.respond(200, self.agents)
+        else:
+            self.respond(404, {"error": "not_found"})
+
+    def do_POST(self) -> None:
+        if self.headers.get("Authorization") != f"Bearer {self.token}":
+            self.respond(401, {"error": "unauthorized"})
+        elif self.path == "/api/agents/ensure-defaults":
+            API.seed_calls += 1
+            API.agents = [{"id": 8, "name": "写稿", "system_prompt": "按素材写稿。"}]
+            self.respond(200, API.agents)
         else:
             self.respond(404, {"error": "not_found"})
 
@@ -60,6 +71,7 @@ class InstallerTest(unittest.TestCase):
         API.token = "test-token-without-prefix"
         API.redirect_projects = False
         API.redirected_requests = 0
+        API.seed_calls = 0
         for name in (".cursor", ".claude", ".codex", ".openclaw", ".hermes"):
             (self.home / name).mkdir()
         API.agents = [{"id": 7, "name": "写稿", "description": "写脚本", "system_prompt": "只用所选素材。"}]
@@ -133,6 +145,17 @@ class InstallerTest(unittest.TestCase):
 
         (roots[0] / "cuijiao-sync/SKILL.md").write_text("stale")
         self.assertEqual(self.run_script("check-skills.py").returncode, 1)
+
+    def test_empty_account_seeds_default_agents_once(self) -> None:
+        API.agents = []
+
+        result = self.run_script("setup-cuijiao.py")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(API.seed_calls, 1)
+        self.assertTrue((self.home / ".cursor/skills/cuijiao-agent-8/SKILL.md").is_file())
+        self.assertEqual(self.run_script("setup-cuijiao.py").returncode, 0)
+        self.assertEqual(API.seed_calls, 1)
 
     def test_token_file_quotes_shell_characters(self) -> None:
         marker = self.home / "unexpected-shell-command"

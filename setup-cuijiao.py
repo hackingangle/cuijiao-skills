@@ -62,13 +62,13 @@ def saved_env() -> dict[str, str]:
     return values
 
 
-def request(url: str, token: str | None = None) -> tuple[int, bytes]:
+def request(url: str, token: str | None = None, method: str = "GET") -> tuple[int, bytes]:
     headers = {"Accept": "application/json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
     try:
         opener = urllib.request.build_opener(NoRedirect)
-        with opener.open(urllib.request.Request(url, headers=headers), timeout=15) as response:
+        with opener.open(urllib.request.Request(url, headers=headers, method=method), timeout=15) as response:
             return response.status, response.read()
     except urllib.error.HTTPError as error:
         return error.code, error.read()
@@ -90,6 +90,19 @@ def api_list(base: str, path: str, token: str) -> list[dict[str, object]]:
     if not isinstance(items, list):
         fail(f"GET /api/{path} 应返回数组；没有安装任何技能。")
     return items
+
+
+def ensure_default_agents(base: str, token: str) -> list[dict[str, object]]:
+    status, body = request(f"{base}/agents/ensure-defaults", token, "POST")
+    if status != 200:
+        fail(f"POST /api/agents/ensure-defaults 返回 HTTP {status}；没有安装任何技能。")
+    try:
+        agents = json.loads(body)
+    except (ValueError, UnicodeDecodeError):
+        fail("POST /api/agents/ensure-defaults 返回无效 JSON；没有安装任何技能。")
+    if not isinstance(agents, list):
+        fail("POST /api/agents/ensure-defaults 应返回数组；没有安装任何技能。")
+    return validate_agents(agents)
 
 
 def harnesses() -> tuple[list[Path], Path | None]:
@@ -232,11 +245,15 @@ def main() -> None:
         fail("缺少 API Token；请在应用中签发后重试。")
 
     api_list(base, "projects", token)
-    agents = validate_agents(api_list(base, "agents", token))
+    agents = api_list(base, "agents", token)
+    if agents:
+        agents = validate_agents(agents)
     roots, claude = harnesses()
     if not roots:
         fail("未检测到 Cursor、Claude Code、Codex、OpenClaw 或 Hermes；可设置 CUIJIAO_SKILLS_DIRS。")
     source, skills = source_skills()
+    if not agents:
+        agents = ensure_default_agents(base, token)
     check_agent_targets(agents, roots, claude)
 
     write_env(base, token)
