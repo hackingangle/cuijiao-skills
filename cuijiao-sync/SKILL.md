@@ -9,17 +9,17 @@ description: >
 
 平台智能体是人设真源。本机 `cuijiao-agent-{id}` 文件只是投影；要修改人设，请在平台修改后重新运行安装器。
 
-当前迁移中的后端尚未提供独立 API Token 和 `GET /api/agents`。安装器会预检这两个资源；若 Agent 接口返回 404，它会明确报错并停止，不写入 `~/.cuijiao/env`，也不安装技能。不要把报错当成同步成功。
+cc-b 整合代码已提供独立 API Token 和 `GET /api/agents`，目标服务仍需部署对应版本。先通过登录会话调用 `POST /api/tokens` 签发 `hd_` API Token；Token 管理接口不接受 API Token。安装器会用该 Token 预检 `GET /api/projects` 和 `GET /api/agents`；若接口缺失或鉴权失败，它会报错并停止，不写入 `~/.cuijiao/env`，也不安装技能。
 
 ## 安装与更新
 
-公开仓库发布后，使用：
+从公开仓库 `main` 安装或更新：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/hackingangle/cuijiao-skills/main/setup-cuijiao.py | python3 - "https://<服务主机>/api"
 ```
 
-发布前，可在本地源码目录执行 `python3 setup-cuijiao.py "https://<服务主机>/api"`。已有 `~/.cuijiao/env` 时可省略地址。安装器交互式读取 Token，保存在权限为 `0600` 的 `~/.cuijiao/env`。它只写 `cuijiao-*` 文件，不读取或更改 `~/.heimdall`。
+也可在本地源码目录执行 `python3 setup-cuijiao.py "https://<服务主机>/api"`。已有 `~/.cuijiao/env` 时可省略地址。安装器交互式读取 API Token，保存在权限为 `0600` 的 `~/.cuijiao/env`。它只写 `cuijiao-*` 文件，不读取或更改 `~/.heimdall`。
 
 | 客户端 | 管道技能 | 智能体投影 |
 |---|---|---|
@@ -33,7 +33,7 @@ curl -fsSL https://raw.githubusercontent.com/hackingangle/cuijiao-skills/main/se
 
 ## 检查版本
 
-本地源码目录运行 `python3 check-skills.py`。公开仓库发布后，可用：
+本地源码目录运行 `python3 check-skills.py`。通过公开仓库检查：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/hackingangle/cuijiao-skills/main/check-skills.py | python3
