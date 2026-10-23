@@ -1,11 +1,13 @@
 ---
 name: cuijiao-sync
 description: >
-  安装或更新萃角儿的管道技能与平台智能体本机投影。
+  安装或更新大料的管道技能与平台智能体本机投影。
   当用户要求同步智能体、安装到 Cursor、Claude Code、Codex、OpenClaw、Hermes，或检查本机技能版本时使用。
 ---
 
-# 萃角儿智能体同步
+# 大料智能体同步
+
+本技能用于同步大料智能体，技能标识仍为 `cuijiao-sync`。
 
 平台智能体是人设真源。本机 `cuijiao-agent-{id}` 文件只是投影；要修改人设，请在平台修改后重新运行安装器。
 

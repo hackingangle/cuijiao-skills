@@ -1,6 +1,8 @@
-# 萃角儿 Skills
+# 大料 Skills
 
-这是 `hackingangle/cuijiao-skills` 的独立技能仓。它提供 `cuijiao-sync`、`cuijiao-platform` 两个管道技能，并把平台智能体投影到 Cursor、Claude Code、Codex、OpenClaw、Hermes。本仓不保存 Token 或智能体私有人设。
+这是大料的独立技能仓库 `hackingangle/cuijiao-skills`。它提供 `cuijiao-sync`、`cuijiao-platform` 两个管道技能，并把平台智能体投影到 Cursor、Claude Code、Codex、OpenClaw、Hermes。本仓不保存 Token 或智能体私有人设。
+
+为兼容已有安装，技能标识、安装命令、下载 URL、配置路径和 `CUIJIAO_*` 环境变量继续沿用原名。
 
 ## 当前接入状态
 

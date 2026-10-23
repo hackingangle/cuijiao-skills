@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install Cuijiao pipeline skills and project user-owned agents to local harnesses."""
+"""Install Daliao pipeline skills and project user-owned agents to local harnesses."""
 
 from __future__ import annotations
 
@@ -175,7 +175,7 @@ def write_env(base: str, token: str) -> None:
 def agent_content(item: dict[str, object]) -> str:
     agent_id = item["id"]
     name = item["name"]
-    description = item.get("description") or f"萃角儿智能体「{name}」"
+    description = item.get("description") or f"大料智能体「{name}」"
     prompt = str(item["system_prompt"]).rstrip()
     return (
         "---\n"
@@ -184,7 +184,7 @@ def agent_content(item: dict[str, object]) -> str:
         "---\n\n"
         f"<!-- cuijiao-managed:{agent_id} -->\n\n"
         f"# {name}\n\n"
-        "访问萃角儿项目和素材时遵守 cuijiao-platform。\n\n"
+        "访问大料项目和素材时遵守 cuijiao-platform。\n\n"
         f"{prompt}\n"
     )
 
@@ -240,7 +240,7 @@ def sync_agents(agents: list[dict[str, object]], roots: list[Path], claude: Path
 def main() -> None:
     saved = saved_env()
     base = validate_base(sys.argv[1] if len(sys.argv) > 1 else saved.get("CUIJIAO_API_BASE", ""))
-    token = saved.get("CUIJIAO_API_TOKEN") or getpass.getpass("请输入萃角儿 API Token：").strip()
+    token = saved.get("CUIJIAO_API_TOKEN") or getpass.getpass("请输入大料 API Token：").strip()
     if not token:
         fail("缺少 API Token；请在应用中签发后重试。")
 

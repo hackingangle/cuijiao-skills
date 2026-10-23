@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare installed Cuijiao pipeline skills with their recorded source."""
+"""Compare installed Daliao pipeline skills with their recorded source."""
 
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ def main() -> int:
     if stale:
         print("请重新运行 setup-cuijiao.py。")
         return 1
-    print("萃角儿管道技能与安装源一致。")
+    print("大料管道技能与安装源一致。")
     return 0
 
 
