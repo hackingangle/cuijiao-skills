@@ -9,8 +9,8 @@ import urllib.request
 from pathlib import Path
 
 
-SKILLS = ("cuijiao-sync", "cuijiao-platform")
-LOCK = Path.home() / ".cuijiao/skills.lock"
+SKILLS = ("daliao-sync", "daliao-platform")
+LOCK = Path.home() / ".daliao/skills.lock"
 
 
 def source_bytes(source: str, skill: str) -> bytes:
@@ -22,7 +22,7 @@ def source_bytes(source: str, skill: str) -> bytes:
 
 def main() -> int:
     if not LOCK.is_file():
-        print(f"缺少安装记录：{LOCK}。先运行 setup-cuijiao.py。")
+        print(f"缺少安装记录：{LOCK}。先运行 setup-daliao.py。")
         return 2
     try:
         values = dict(line.split("=", 1) for line in LOCK.read_text(encoding="utf-8").splitlines())
@@ -43,7 +43,7 @@ def main() -> int:
                 print(f"待更新：{path}")
                 stale = True
     if stale:
-        print("请重新运行 setup-cuijiao.py。")
+        print("请重新运行 setup-daliao.py。")
         return 1
     print("大料管道技能与安装源一致。")
     return 0

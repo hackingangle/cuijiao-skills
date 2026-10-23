@@ -1,5 +1,5 @@
 ---
-name: cuijiao-platform
+name: daliao-platform
 description: >
   大料项目与素材的 API 使用约定。
   当用户要求查询项目、把文本来源入库、修改或删除文本素材时使用。
@@ -7,11 +7,11 @@ description: >
 
 # 大料平台能力
 
-本技能用于访问大料，技能标识仍为 `cuijiao-platform`。
+本技能用于访问大料。
 
 平台项目和素材由账号隔离。访问时只使用用户已提供的 API 地址与独立 API Token；不要猜测项目 ID，也不要输出完整 Token。若 Token 尚未签发或请求返回 401，停止写入并说明阻塞项。目标记录返回 404 时不要猜测其他 ID。
 
-运行安装器且服务端依赖就绪后，可在终端执行 `source ~/.cuijiao/env`，然后使用 `$CUIJIAO_API_BASE` 与 `$CUIJIAO_API_TOKEN`。所有请求带 `Authorization: Bearer $CUIJIAO_API_TOKEN`。独立 API Token 以 `hd_` 开头，可由登录会话通过 `POST /api/tokens` 签发、`DELETE /api/tokens/{id}` 撤销；这些 Token 管理接口只接受登录会话。
+运行安装器且服务端依赖就绪后，可在终端执行 `source ~/.daliao/env`，然后使用 `$DALIAO_API_BASE` 与 `$DALIAO_API_TOKEN`。所有请求带 `Authorization: Bearer $DALIAO_API_TOKEN`。独立 API Token 以 `hd_` 开头，可由登录会话通过 `POST /api/tokens` 签发、`DELETE /api/tokens/{id}` 撤销；这些 Token 管理接口只接受登录会话。
 
 ## 已有的项目与纯文本素材接口
 

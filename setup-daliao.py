@@ -18,9 +18,9 @@ from urllib.parse import urlsplit
 
 RAW = "https://raw.githubusercontent.com/hackingangle/cuijiao-skills/main"
 HOME = Path.home()
-CONFIG = HOME / ".cuijiao"
+CONFIG = HOME / ".daliao"
 ENV = CONFIG / "env"
-PIPE_SKILLS = ("cuijiao-sync", "cuijiao-platform")
+PIPE_SKILLS = ("daliao-sync", "daliao-platform")
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -106,7 +106,7 @@ def ensure_default_agents(base: str, token: str) -> list[dict[str, object]]:
 
 
 def harnesses() -> tuple[list[Path], Path | None]:
-    manual = os.environ.get("CUIJIAO_SKILLS_DIRS")
+    manual = os.environ.get("DALIAO_SKILLS_DIRS")
     if manual:
         roots = [Path(path).expanduser() for path in shlex.split(manual)]
         claude = HOME / ".claude/agents" if HOME / ".claude/skills" in roots else None
@@ -124,7 +124,7 @@ def harnesses() -> tuple[list[Path], Path | None]:
     if shutil.which("openclaw") or (HOME / ".openclaw").exists():
         roots.append(HOME / ".openclaw/skills")
     if shutil.which("hermes") or (HOME / ".hermes").exists():
-        roots.append(HOME / ".hermes/skills/cuijiao")
+        roots.append(HOME / ".hermes/skills/daliao")
     return roots, claude
 
 
@@ -164,8 +164,8 @@ def write_env(base: str, token: str) -> None:
     fd, temporary = tempfile.mkstemp(dir=CONFIG, prefix=".env-")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as file:
-            file.write(f"export CUIJIAO_API_BASE={shlex.quote(base)}\n")
-            file.write(f"export CUIJIAO_API_TOKEN={shlex.quote(token)}\n")
+            file.write(f"export DALIAO_API_BASE={shlex.quote(base)}\n")
+            file.write(f"export DALIAO_API_TOKEN={shlex.quote(token)}\n")
         os.replace(temporary, ENV)
     finally:
         if os.path.exists(temporary):
@@ -179,12 +179,12 @@ def agent_content(item: dict[str, object]) -> str:
     prompt = str(item["system_prompt"]).rstrip()
     return (
         "---\n"
-        f"name: cuijiao-agent-{agent_id}\n"
+        f"name: daliao-agent-{agent_id}\n"
         f"description: {json.dumps(str(description), ensure_ascii=False)}\n"
         "---\n\n"
-        f"<!-- cuijiao-managed:{agent_id} -->\n\n"
+        f"<!-- daliao-managed:{agent_id} -->\n\n"
         f"# {name}\n\n"
-        "访问大料项目和素材时遵守 cuijiao-platform。\n\n"
+        "访问大料项目和素材时遵守 daliao-platform。\n\n"
         f"{prompt}\n"
     )
 
@@ -192,13 +192,13 @@ def agent_content(item: dict[str, object]) -> str:
 def check_agent_targets(agents: list[dict[str, object]], roots: list[Path], claude: Path | None) -> None:
     for item in agents:
         agent_id = item["id"]
-        slug = f"cuijiao-agent-{agent_id}"
+        slug = f"daliao-agent-{agent_id}"
         targets = [root / slug / "SKILL.md" for root in roots if root != HOME / ".claude/skills"]
         if claude:
             targets.append(claude / f"{slug}.md")
         for path in targets:
             if path.is_symlink() or (path.exists() and (
-                not path.is_file() or f"<!-- cuijiao-managed:{agent_id} -->" not in path.read_text(encoding="utf-8")
+                not path.is_file() or f"<!-- daliao-managed:{agent_id} -->" not in path.read_text(encoding="utf-8")
             )):
                 fail(f"已有非托管智能体文件：{path}；没有安装任何技能。")
 
@@ -206,7 +206,7 @@ def check_agent_targets(agents: list[dict[str, object]], roots: list[Path], clau
 def sync_agents(agents: list[dict[str, object]], roots: list[Path], claude: Path | None) -> None:
     ids = {str(item["id"]) for item in agents}
     for item in agents:
-        slug = f"cuijiao-agent-{item['id']}"
+        slug = f"daliao-agent-{item['id']}"
         body = agent_content(item)
         for root in roots:
             if root == HOME / ".claude/skills":
@@ -222,25 +222,25 @@ def sync_agents(agents: list[dict[str, object]], roots: list[Path], claude: Path
     for root in roots:
         if root == HOME / ".claude/skills":
             continue
-        for path in root.glob("cuijiao-agent-*/SKILL.md"):
-            if "<!-- cuijiao-managed:" not in path.read_text(encoding="utf-8"):
+        for path in root.glob("daliao-agent-*/SKILL.md"):
+            if "<!-- daliao-managed:" not in path.read_text(encoding="utf-8"):
                 continue
-            if path.parent.name.removeprefix("cuijiao-agent-") not in ids:
+            if path.parent.name.removeprefix("daliao-agent-") not in ids:
                 path.unlink()
                 try:
                     path.parent.rmdir()
                 except OSError:
                     pass
     if claude:
-        for path in claude.glob("cuijiao-agent-*.md"):
-            if "<!-- cuijiao-managed:" in path.read_text(encoding="utf-8") and path.stem.removeprefix("cuijiao-agent-") not in ids:
+        for path in claude.glob("daliao-agent-*.md"):
+            if "<!-- daliao-managed:" in path.read_text(encoding="utf-8") and path.stem.removeprefix("daliao-agent-") not in ids:
                 path.unlink()
 
 
 def main() -> None:
     saved = saved_env()
-    base = validate_base(sys.argv[1] if len(sys.argv) > 1 else saved.get("CUIJIAO_API_BASE", ""))
-    token = saved.get("CUIJIAO_API_TOKEN") or getpass.getpass("请输入大料 API Token：").strip()
+    base = validate_base(sys.argv[1] if len(sys.argv) > 1 else saved.get("DALIAO_API_BASE", ""))
+    token = saved.get("DALIAO_API_TOKEN") or getpass.getpass("请输入大料 API Token：").strip()
     if not token:
         fail("缺少 API Token；请在应用中签发后重试。")
 
@@ -250,7 +250,7 @@ def main() -> None:
         agents = validate_agents(agents)
     roots, claude = harnesses()
     if not roots:
-        fail("未检测到 Cursor、Claude Code、Codex、OpenClaw 或 Hermes；可设置 CUIJIAO_SKILLS_DIRS。")
+        fail("未检测到 Cursor、Claude Code、Codex、OpenClaw 或 Hermes；可设置 DALIAO_SKILLS_DIRS。")
     source, skills = source_skills()
     if not agents:
         agents = ensure_default_agents(base, token)
@@ -272,7 +272,7 @@ def main() -> None:
         encoding="utf-8",
     )
     print(f"已安装到 {len(roots)} 个 Harness，并同步 {len(agents)} 个智能体。")
-    print("在 Harness 终端执行：source ~/.cuijiao/env")
+    print("在 Harness 终端执行：source ~/.daliao/env")
 
 
 if __name__ == "__main__":
