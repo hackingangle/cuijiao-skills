@@ -79,12 +79,12 @@ class InstallerTest(unittest.TestCase):
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         self.api_base = f"http://127.0.0.1:{self.server.server_port}/api"
-        config = self.home / ".cuijiao"
+        config = self.home / ".daliao"
         config.mkdir(mode=0o700)
         self.env_file = config / "env"
         self.env_file.write_text(
-            f"export CUIJIAO_API_BASE='{self.api_base}'\n"
-            f"export CUIJIAO_API_TOKEN='{API.token}'\n"
+            f"export DALIAO_API_BASE='{self.api_base}'\n"
+            f"export DALIAO_API_TOKEN='{API.token}'\n"
         )
         self.env_file.chmod(0o600)
 
@@ -108,12 +108,12 @@ class InstallerTest(unittest.TestCase):
         API.agents = None
         original_env = self.env_file.read_bytes()
 
-        result = self.run_script("setup-cuijiao.py")
+        result = self.run_script("setup-daliao.py")
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Agent 接口尚未就绪", result.stderr)
         self.assertEqual(self.env_file.read_bytes(), original_env)
-        self.assertFalse((self.home / ".cursor/skills/cuijiao-sync/SKILL.md").exists())
+        self.assertFalse((self.home / ".cursor/skills/daliao-sync/SKILL.md").exists())
         self.assertNotIn(API.token, result.stdout + result.stderr)
 
     def test_installs_five_harnesses_and_checks_local_skill_versions(self) -> None:
@@ -121,7 +121,7 @@ class InstallerTest(unittest.TestCase):
         old_skill.parent.mkdir(parents=True)
         old_skill.write_text("old Heimdall skill")
 
-        result = self.run_script("setup-cuijiao.py")
+        result = self.run_script("setup-daliao.py")
 
         self.assertEqual(result.returncode, 0, result.stderr)
         roots = (
@@ -129,47 +129,55 @@ class InstallerTest(unittest.TestCase):
             self.home / ".claude/skills",
             self.home / ".agents/skills",
             self.home / ".openclaw/skills",
-            self.home / ".hermes/skills/cuijiao",
+            self.home / ".hermes/skills/daliao",
         )
         for root in roots:
-            self.assertTrue((root / "cuijiao-sync/SKILL.md").is_file())
-            self.assertTrue((root / "cuijiao-platform/SKILL.md").is_file())
-        projected = (roots[0] / "cuijiao-agent-7/SKILL.md").read_text()
-        self.assertIn("<!-- cuijiao-managed:7 -->", projected)
-        self.assertEqual(projected.split("---", 2)[1].strip().splitlines()[0], "name: cuijiao-agent-7")
-        self.assertTrue((self.home / ".claude/agents/cuijiao-agent-7.md").is_file())
+            self.assertTrue((root / "daliao-sync/SKILL.md").is_file())
+            self.assertTrue((root / "daliao-platform/SKILL.md").is_file())
+        projected = (roots[0] / "daliao-agent-7/SKILL.md").read_text()
+        self.assertIn("<!-- daliao-managed:7 -->", projected)
+        self.assertEqual(projected.split("---", 2)[1].strip().splitlines()[0], "name: daliao-agent-7")
+        self.assertTrue((self.home / ".claude/agents/daliao-agent-7.md").is_file())
         self.assertEqual(old_skill.read_text(), "old Heimdall skill")
         self.assertNotIn(API.token, result.stdout + result.stderr)
         self.assertEqual(self.env_file.stat().st_mode & 0o777, 0o600)
+        self.assertIn(f"export DALIAO_API_BASE={shlex.quote(self.api_base)}", self.env_file.read_text())
+        self.assertIn(f"export DALIAO_API_TOKEN={shlex.quote(API.token)}", self.env_file.read_text())
+        lock = dict(
+            line.split("=", 1)
+            for line in (self.home / ".daliao/skills.lock").read_text().splitlines()
+        )
+        self.assertEqual(Path(lock["source"]), ROOT)
+        self.assertEqual(set(json.loads(lock["targets"])), {str(root) for root in roots})
         self.assertEqual(self.run_script("check-skills.py").returncode, 0)
 
-        (roots[0] / "cuijiao-sync/SKILL.md").write_text("stale")
+        (roots[0] / "daliao-sync/SKILL.md").write_text("stale")
         self.assertEqual(self.run_script("check-skills.py").returncode, 1)
 
     def test_empty_account_seeds_default_agents_once(self) -> None:
         API.agents = []
 
-        result = self.run_script("setup-cuijiao.py")
+        result = self.run_script("setup-daliao.py")
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(API.seed_calls, 1)
-        self.assertTrue((self.home / ".cursor/skills/cuijiao-agent-8/SKILL.md").is_file())
-        self.assertEqual(self.run_script("setup-cuijiao.py").returncode, 0)
+        self.assertTrue((self.home / ".cursor/skills/daliao-agent-8/SKILL.md").is_file())
+        self.assertEqual(self.run_script("setup-daliao.py").returncode, 0)
         self.assertEqual(API.seed_calls, 1)
 
     def test_token_file_quotes_shell_characters(self) -> None:
         marker = self.home / "unexpected-shell-command"
         API.token = f"quote'$(touch {marker})"
         self.env_file.write_text(
-            f"export CUIJIAO_API_BASE={shlex.quote(self.api_base)}\n"
-            f"export CUIJIAO_API_TOKEN={shlex.quote(API.token)}\n"
+            f"export DALIAO_API_BASE={shlex.quote(self.api_base)}\n"
+            f"export DALIAO_API_TOKEN={shlex.quote(API.token)}\n"
         )
 
-        result = self.run_script("setup-cuijiao.py")
+        result = self.run_script("setup-daliao.py")
 
         self.assertEqual(result.returncode, 0, result.stderr)
         check = subprocess.run(
-            ["/bin/sh", "-c", '. "$1"; [ "$CUIJIAO_API_TOKEN" = "$2" ]', "sh", str(self.env_file), API.token],
+            ["/bin/sh", "-c", '. "$1"; [ "$DALIAO_API_TOKEN" = "$2" ]', "sh", str(self.env_file), API.token],
             capture_output=True,
             text=True,
             check=False,
@@ -180,25 +188,25 @@ class InstallerTest(unittest.TestCase):
 
     def test_api_redirect_does_not_forward_token(self) -> None:
         API.redirect_projects = True
-        result = self.run_script("setup-cuijiao.py")
+        result = self.run_script("setup-daliao.py")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("HTTP 302", result.stderr)
         self.assertEqual(API.redirected_requests, 0)
-        self.assertFalse((self.home / ".cursor/skills/cuijiao-sync/SKILL.md").exists())
+        self.assertFalse((self.home / ".cursor/skills/daliao-sync/SKILL.md").exists())
 
     def test_unmanaged_agent_file_is_preserved(self) -> None:
-        existing = self.home / ".cursor/skills/cuijiao-agent-7/SKILL.md"
+        existing = self.home / ".cursor/skills/daliao-agent-7/SKILL.md"
         existing.parent.mkdir(parents=True)
         existing.write_text("my own skill")
         original_env = self.env_file.read_bytes()
 
-        result = self.run_script("setup-cuijiao.py")
+        result = self.run_script("setup-daliao.py")
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("已有非托管智能体文件", result.stderr)
         self.assertEqual(existing.read_text(), "my own skill")
         self.assertEqual(self.env_file.read_bytes(), original_env)
-        self.assertFalse((self.home / ".cursor/skills/cuijiao-sync/SKILL.md").exists())
+        self.assertFalse((self.home / ".cursor/skills/daliao-sync/SKILL.md").exists())
 
 
 if __name__ == "__main__":

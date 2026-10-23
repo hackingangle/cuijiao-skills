@@ -1,6 +1,6 @@
-# 萃角儿 Skills
+# 大料 Skills
 
-这是 `hackingangle/cuijiao-skills` 的独立技能仓。它提供 `cuijiao-sync`、`cuijiao-platform` 两个管道技能，并把平台智能体投影到 Cursor、Claude Code、Codex、OpenClaw、Hermes。本仓不保存 Token 或智能体私有人设。
+这是大料的独立技能仓库 `hackingangle/cuijiao-skills`。它提供 `daliao-sync`、`daliao-platform` 两个管道技能，并把平台智能体投影到 Cursor、Claude Code、Codex、OpenClaw、Hermes。本仓不保存 Token 或智能体私有人设。
 
 ## 当前接入状态
 
@@ -18,18 +18,18 @@
 
 ```bash
 python3 -m unittest discover -s tests -v
-python3 setup-cuijiao.py "https://<服务主机>/api"
+python3 setup-daliao.py "https://<服务主机>/api"
 python3 check-skills.py
 ```
 
-服务端完成上述依赖后，安装器交互式读取 API Token，保存到权限为 `0600` 的 `~/.cuijiao/env`。更新时沿用该文件中的地址与 Token；可再次传入地址覆盖地址。不要把 Token 写进命令行、仓库文件或网页截图。`~/.heimdall` 及旧 `heimdall-*` 技能不会被改动。未检测到客户端时可用 `CUIJIAO_SKILLS_DIRS` 指定技能目录（shell 风格引用，多个目录以空格分隔）。
+服务端完成上述依赖后，安装器交互式读取 API Token，保存到权限为 `0600` 的 `~/.daliao/env`。更新时沿用该文件中的地址与 Token；可再次传入地址覆盖地址。不要把 Token 写进命令行、仓库文件或网页截图。`~/.heimdall` 及旧 `heimdall-*` 技能不会被改动。未检测到客户端时可用 `DALIAO_SKILLS_DIRS` 指定技能目录（shell 风格引用，多个目录以空格分隔）。
 
 ## 公开分发入口
 
 公开仓库 `main` 的安装与检查入口为：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/hackingangle/cuijiao-skills/main/setup-cuijiao.py | python3 - "https://<服务主机>/api"
+curl -fsSL https://raw.githubusercontent.com/hackingangle/cuijiao-skills/main/setup-daliao.py | python3 - "https://<服务主机>/api"
 curl -fsSL https://raw.githubusercontent.com/hackingangle/cuijiao-skills/main/check-skills.py | python3
 ```
 
